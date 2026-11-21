@@ -1,4 +1,8 @@
+# .github/workflows/deploy.yml
 # Push to main -> this builds and deploys. No keys stored anywhere.
+#
+# It stays idle (skipped, not failed) until AWS_ROLE_ARN is set, so a fresh fork shows no red cross.
+# It builds the app in demo-app/. If your project is at the repo root, change the two lines marked ROOT.
 #
 # Before it works, do these three things once:
 #   1. Add GitHub as an OIDC provider in IAM (Identity providers -> Add provider ->
@@ -28,7 +32,11 @@ concurrency:
 
 jobs:
   deploy:
+    if: vars.AWS_ROLE_ARN != ''
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: demo-app      # ROOT: use . if package.json is at the repo root
     steps:
       - uses: actions/checkout@v4
 
@@ -36,6 +44,7 @@ jobs:
         with:
           node-version: 20
           cache: npm
+          cache-dependency-path: demo-app/package-lock.json      # ROOT: use package-lock.json
 
       - run: npm ci
       - run: npm run build
